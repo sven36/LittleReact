@@ -1,0 +1,198 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <script type="text/javascript" src="/build/LittleReact.js"></script>
+</head>
+<body>
+    <div id="content">2344</div>
+   <!--  <script type="text/javascript" src="./build/bundle.js"></script> -->
+
+    
+</body>
+</html>
+
+<script>
+    var HelloMessage = LittleReact.createClass({
+        getInitialState: function () {
+            return { type: 'say:' };
+        },
+        changeType: function () {
+            this.setState({ type: 'shout:' })
+        },
+        render: function () {
+            return LittleReact.createElement("div", { onClick: this.changeType }, this.state.type, "Hello ", this.props.name);
+        }
+    });
+    var dd = LittleReact.createElement(HelloMessage, { name: "John" });
+
+    LittleReact.render(dd, document.getElementById("content"));
+
+    
+</script>
+
+
+
+
+
+<script>
+    getActiveElement
+
+    return document.activeElement || document.body;
+    /*var Human = function (param) {
+        this.skill = param && param.skill || 'bao mi';
+        this.hobby = param && param.hobby || 'bao mi';
+    }
+    Human.prototype = {
+        getSkill: function () {
+            return this.skill;
+        },
+        getHobby: function () {
+            return this.getHobby;
+        }
+    }
+    var Named = function (name) {
+        var that = this;
+        (function (name, that) {
+            that.wholeName = name;
+            if(name.indexOf(' ')>0){
+                that.firstName = name.slice(0, name.indexOf(' '));
+                that.secondName = name.slice(name.indexOf(' '));
+            }
+        })(name, that);
+    }
+
+    var pp = new Named('xiao hei');
+    console.log(pp.firstName);
+
+    //2016-11-14
+    function Super(name) {
+        this.name = name;
+    }
+    Super.prototype.say = function () {
+        console.log(this.name);
+    }
+    function Sub(name) {
+        Super.call(this, name);
+    }
+    Sub.prototype = oo(Super.prototype);
+    //Sub.prototype = new Super();
+    var tss = new Sub('ts');
+    tss.say();
+
+    function oo(o) {
+        function F() { };
+        F.prototype = o;
+        return new F();
+    }2016-12-24*/
+
+    /*function pp(name) {
+        this.say = function () { console.log(name)};
+    }
+    var p1 = new pp('p1');
+    p1.say();
+    var p2 = new pp('p2');
+    p2.say();
+    console.log(p1.say+" p2:"+p2.say);
+    var p3 = Object.create(pp);
+    p3.say();
+
+    var book = (function () {
+        var num = 1;
+        function check() { console.log('check'); };
+        function ttt(id, name, price)
+        {
+            var nn, pp;
+            function ccId() { console.log('ccId'); };
+            num++;
+            this.ta = id;
+            this.getId = function () { console.log(ta + ", id:" + id); };
+            this.copy = function  (m) { console.log('copy'+m); };
+            this.setName = function (o) { console.log('setName:' + o); };
+            this.setName(price);
+        };
+        ttt.prototype = {
+            isJS: false,
+            dip: function (k) { console.log(num+" k:"+k); }
+        }
+        return ttt;
+    })();
+    //var b = Object.create(book(3, 'Ename', 19));
+    var b = new book(3, 'Ename', 19);
+    console.log( b.isJS);
+    b.dip('8');
+    b.copy('6');
+    book.check();
+    b.getId();
+
+    function foo(t)
+    {
+        this.t = t;
+    }
+    foo.prototype.i = function () {
+        return "That is" + this.t;
+    };
+    function bar(s)
+    {
+        foo.call(this, s);
+    }
+    bar.prototype = Object.create(foo.prototype);
+    bar.prototype.sp = function () {
+        console.log('Hello' + this.i());
+    }
+    var b1 = new bar('b1');
+    b1.sp();
+
+
+    SS = {
+        in: function (w) {
+            this.me = w;
+        },
+        id: function () {
+            return "I am " + this.me;
+        }
+    };
+    BB = Object.create(SS);
+    BB.speak = function () {
+        console.log("BB " + this.id());
+    };
+    var b22 = Object.create(BB);
+    b22.in('b22');
+    b22.speak();*/
+    //var ts = function (selector, context) {
+    //    var args = [].slice.call(arguments);
+    //    var args2 = [].slice.call("[ts,sd]");
+    //    return new ts.fn.init(selector, context);
+    //};
+
+    //var tm = ts("ts","sd");
+    //var ts2 = $(tm);
+    //var render = function (str, data) {
+    //    var tpl = str.replace(/<%([\s\S]+?)%>/g, function (match, code) {
+    //        return "'+obj." + code + "+'";
+    //    });
+    //    tpl = "var tpl='" + tpl + "'\nreturn tpl;";
+    //    var complied = new Function('obj', tpl);
+    //    return complied(data);
+    //}
+    //var txt = render("hello <%username%>", { username: 'Sk' });
+    //console.log(txt);
+    //function ss() {
+    //    var tpl = 'hello ' + obj.username + ''
+    //    return tpl;
+    //}
+    //var path = 'http://domaina.com /test//(a:sss:?:(*';
+    //var path2 = 'http://domaina.com /test//(a:ssss';
+    //var patern = /\/\(/g;
+    //var matches = patern.exec(path);
+    //path = path.replace(/(\/)?(\.)?:(\w+)(?:(\(.*?\)))?/g, "2");
+    //path = path.replace(/\/\/\(/g, "(?:/");
+    //tess(path);
+    //function tess(path) {
+    //    path = path.concat('/?');
+    //    path = path.replace(/\/\(/g, 'sd');
+    //}
+
+    //alert(path);
+</script>
