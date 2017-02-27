@@ -1,6 +1,6 @@
 ﻿//空函数用于ReactClass原型继承及混入
 var ReactClassComponent = function ReactClassComponent() { };
-
+var emptyObject = {};
 var ReactClass = {
     //创建自定义组件；creactClass是创建自定义组件的入口方法，负责管理生命周期中的getDefaultProps;
     //该方法在整个生命周期中只执行一次，这样所有实例初始化的props将会共享；
@@ -13,8 +13,7 @@ var ReactClass = {
             this.props = props;
             this.context = context;
             this.refs = emptyObject;
-            this.updater = updater || ReactNoopUpdateQueue;
-            this.state = null;
+            this.updater = updater;
             // ReactClasses没有构造函数，通过getInitialState和componentWillMount来代替
             var initialState = this.getInitialState ? this.getInitialState() : null;
             this.state = initialState;
@@ -23,7 +22,7 @@ var ReactClass = {
         Constructor.prototype = new ReactClassComponent();
         Constructor.prototype.constructor = Constructor;
         Constructor.prototype.__reactAutoBindPairs = [];
-        //Constructor原型即ReactClassComponent渲染传入的方法以及React的API
+        //Constructor原型即ReactClassComponent渲染传入的方法以及React的API;
         var proto = Constructor.prototype;
         for (var name in spec) {
             var property = spec[name];
@@ -254,10 +253,9 @@ var LittleReact = {
     nextReactRootIndex: 0,
     createClass: ReactClass.createClass,
     render: function (nextElement, container, callback) {
-        //这是对reactElement进行一个元素包裹；在React之前的版本中需要根据传入的node是DOM还是字符串，区分为ReactDOMComponent或ReactDOMTextComponent
-        //或ReactCompositeComponent；现在我们用这个临时的TopLevelWrapper函数包裹所有的属性，这样就不必在这判断node的类型了；
-        var nextWrappedElement = LittleReactElement(TopLevelWrapper, null, null, null, null, null, nextElement);
-
+        //React之中是需要先包裹一下，我把这个去了； 这个包裹是对reactElement进行一个元素包裹；在React之前的版本中需要根据传入的node是DOM还是字符串，区分为ReactDOMComponent或ReactDOMTextComponent
+        //或ReactCompositeComponent；用这个临时的TopLevelWrapper函数包裹所有的属性，这样就不必在这判断node的类型了；
+        //var nextWrappedElement = LittleReactElement(TopLevelWrapper, null, null, null, null, null, nextElement);
         var nextContext = {};
         //if (parentComponent) {
         //    var parentInst = ReactInstanceMap.get(parentComponent);
@@ -400,7 +398,7 @@ function instantiateReactComponent(node) {
     //当node类型为对象时，即是DOM标签或者自定义组件，如果element类型为字符串时，则初始化DOM标签组件，否则初始化自定义组件；
     if (typeof node === 'object') {
         if (typeof node.type === 'string') {
-            instance = ReactDOMComponent(node);
+            instance =new ReactDOMComponent(node);
         }
         else {
             var isInternalComponentType = typeof type === 'function' && typeof type.prototype !== 'undefined' && typeof type.prototype.mountComponent === 'function' && typeof type.prototype.receiveComponent === 'function';
@@ -454,6 +452,14 @@ var ReactCompositeComponent = function (element) {
 }
 ReactCompositeComponent.prototype.displayName = 'ReactCompositeComponent';
 ReactCompositeComponent.prototype.mountComponent = function (internalInstance, hostContainerInfo, tag, ownerDocument) {
+    this._context = {};
+    this._mountOrder = nextMountID++;
+    this._hostParent = hostParent;
+    this._hostContainerInfo = hostContainerInfo;
+    var publicProps = this._currentElement.props;
+    var Component = internalInstance._currentElement.type;
+    var instanceOrElement;
+    instanceOrElement = new Component(publicProps, this._context);
     return performInitialMount(internalInstance, hostContainerInfo, tag, ownerDocument);
 }
 
@@ -464,109 +470,39 @@ ReactCompositeComponent.prototype.mountComponent = function (internalInstance, h
 var nextMountID = 1;
 function FactoryMountComponent(internalInstance, hostContainerInfo, tag, ownerDocument) {
     var hostParent;
+    //var internalInstance;
+    //if (child.$$typeof) {
+    //    internalInstance
+    //}
     //调用组件对应原型的渲染方法；
     if (internalInstance.displayName === 'ReactCompositeComponent') {
         var markup = internalInstance.mountComponent(internalInstance, hostContainerInfo, tag, ownerDocument);
     }
     var markup = internalInstance.mountComponent(hostParent,hostContainerInfo, tag, ownerDocument);
     return markup;
-
-    //当前元素对应的上下文；
-    this._context = context;
-    //当组件挂载时会分配一个递增编号，表示执行ReactUpdates时更新组件的顺序；
-    this._mountOrder = nextMountID++;
-    this._hostParent = hostParent;
-    this._hostContainerInfo = hostContainerInfo;
-
-    var publicProps = currentElement.props;
-    //var publicContext = this._processContext(context);
-
-    var Component = currentElement.type;
-
-    var ReactUpdateQueue = {
-        isMounted: '',
-        enqueueCallback: '',
-        enqueueCallbackInternal: '',
-        enqueueReplaceState: '',
-        enqueueSetState: '',
-        enqueueElementInternal: ''
-    };
-    var updateQueue = ReactUpdateQueue;// transaction.getUpdateQueue();
-
-    // 初始化公共类
-    var doConstruct = !!(Component.prototype && Component.prototype.isReactComponent);
-    var isPureComponent = !!(Component.prototype && Component.prototype.isPureReactComponent);
-    var inst = { rootID: nextMountID - 1 }//this._constructComponent(doConstruct, publicProps, publicContext, updateQueue);
-
-
-
-    var renderedElement;
-
-    // 用于判断组件是否为stateless，无状态组件没有状态更新队列，它只专注于渲染；
-    if (!doConstruct && (inst == null || inst.render == null)) {
-        renderedElement = inst;
-        warnIfInvalidElement(Component, renderedElement);
-        !(inst === null || inst === false || ReactElement.isValidElement(inst)) ? "development" !== 'production' ? invariant(false, '%s(...): A valid React element (or null) must be returned. You may have returned undefined, an array or some other invalid object.', Component.displayName || Component.name || 'Component') : _prodInvariant('105', Component.displayName || Component.name || 'Component') : void 0;
-        inst = new StatelessComponent(Component);
-        this._compositeType = CompositeTypes.StatelessFunctional;
-    } else {
-        if (isPureComponent) {
-            this._compositeType = 1;// CompositeTypes.PureClass;
-        } else {
-            this._compositeType = 0;//CompositeTypes.ImpureClass;
-        }
-    }
-    var propsMutated = inst.props !== publicProps;
-    var componentName = Component.displayName || Component.name || 'Component';
-
-
-    // 这些初始化参数本该在构造函数中设置，在此设置是为了便于进行简单的类抽象；
-    inst.props = publicProps;
-    inst.context = publicContext;
-    inst.refs = emptyObject;
-    inst.updater = updateQueue;
-
-    this._instance = inst;
-
-    //将实例存储为一个引用；
-    //ReactInstanceMap.set(inst, this);
-
-    //初始化state
-    var initialState = inst.state;
-    if (initialState === undefined) {
-        inst.state = initialState = null;
-    }
-    !(typeof initialState === 'object' && !Array.isArray(initialState)) ? "development" !== 'production' ? invariant(false, '%s.state: must be set to an object or null', this.getName() || 'ReactCompositeComponent') : _prodInvariant('106', this.getName() || 'ReactCompositeComponent') : void 0;
-    //初始化更新队列;
-    this._pendingStateQueue = null;
-    this._pendingReplaceState = false;
-    this._pendingForceUpdate = false;
-
-    var markup;
-    //如果挂载时出现错误；
-    if (inst.unstable_handleError) {
-        //其内部大概是捕捉错误如无错误则初始化挂载，如有错误则卸载组件后再挂载；先略过；
-        markup = this.performInitialMountWithErrorHandling(renderedElement, hostParent, hostContainerInfo, transaction, context);
-    } else {
-        //执行初始挂载;
-        markup = performInitialMount(renderedElement, hostParent, hostContainerInfo, transaction, context);
-    }
-    //如果存在componentDidMount则调用
-    if (inst.componentDidMount) {
-        if ("development" !== 'production') {
-            transaction.getReactMountReady().enqueue(invokeComponentDidMountWithTimer, this);
-        } else {
-            transaction.getReactMountReady().enqueue(inst.componentDidMount, inst);
-        }
-    }
-
-    return markup;
 }
 
 //进行递归渲染，每次都获得当前节点的子节点，根据子节点的不同类型调用相应的渲染方法；
 function performInitialMount(componentInstance, hostContainerInfo, tag, ownerDocument) {
-    var inst = componentInstance;
-    var renderedElement;
+    var props = componentInstance._currentElement.props;
+    var displayName = componentInstance.displayName;
+    var Component = componentInstance._currentElement.type;
+    var child;
+    var inst;
+
+    //如果拥有子组件则找到它，目的是先渲染子组件；
+    if (displayName) {
+        inst = new Component(props, null, null);
+        child = inst.render();
+        child = instantiateReactComponent(child);
+    }
+    else {
+        inst = function () { };
+        child = componentInstance;
+    }
+    //得到currentElement子节点对应的Component类实例；
+    //保存子节点的实例，用于循环递归到最底层然后从最底层开始渲染；比如ReactDOMComponentTree的precacheNode方法；
+    this._renderedComponent = child;
     //如果存在componentWillMount则调用；
     if (inst.componentWillMount) {
         inst.componentWillMount();
@@ -575,25 +511,21 @@ function performInitialMount(componentInstance, hostContainerInfo, tag, ownerDoc
             inst.state = this._processPendingState(inst.props, inst.context);
         }
     }
-    //如果拥有子组件则找到它，目的是先渲染子组件；
-    if (renderedElement === undefined) {
-        if (!inst.render) {
-            renderedElement = inst._currentElement.props;
-        } else {
-            renderedElement = inst.render();
-        }
-    }
-    //得到currentElement子节点对应的Component类实例；
-    var child = instantiateReactComponent(renderedElement);
-    //保存子节点的实例，用于循环递归到最底层然后从最底层开始渲染；比如ReactDOMComponentTree的precacheNode方法；
-    this._renderedComponent = child;
     //递归渲染
     var markup = FactoryMountComponent(child, hostContainerInfo, tag, ownerDocument);
     //如果存在componentDidMount则调用；
     if (inst.componentDidMount) {
         inst.componentDidMount();
     }
-    return markup;
+    mountNodesToContainer(markup, hostContainerInfo,null);
+}
+
+//最后一步~把渲染后的Node添加进容器；
+function mountNodesToContainer(markup,container,refnode) {
+    while (container.lastChild) {
+        container.removeChild(container.lastChild);
+    }
+    container.insertBefore(markup.node, refnode);
 }
 
 var ReactDOMComponent= function (element) {
@@ -694,14 +626,21 @@ ReactDOMComponent.prototype.mountComponent = function (hostParent,container, tag
             el = ownerDocument.createElementNS(namespaceURI, this._currentElement.type);
         }
         ReactDOMComponentTree.precacheNode(this, el);
-        this._flags |= Flags.hasCachedChildNodes;
+        //this._flags |= Flags.hasCachedChildNodes;
         if (!this._hostParent) {
             el.setAttribute('data-reactroot', '');
         }
         //把属性赋上去；
         this.updateDOMProperties(null, props, transaction);
         var lazyTree = DOMLazyTree(el);
-        this._createInitialChildren(transaction, props, context, lazyTree);
+        if (typeof props.children === 'string' || typeof props.children === 'number') {
+            var firstChild = lazyTree.node.firstChild;
+            if (firstChild && firstChild === node.lastChild && firstChild.nodeType === 3) {
+                firstChild.nodeValue = props.children;
+                return;
+            }
+            lazyTree.node.textContent = props.children;
+        }
         mountImage = lazyTree;
     } else {
         var tagOpen = this._createOpenTagMarkupAndPutListeners(transaction, props);
@@ -777,11 +716,11 @@ ReactDOMComponent.prototype.updateDOMProperties = function (lastProps, nextProps
     }
     for (propKey in nextProps) {
         var nextProp = nextProps[propKey];
-        var lastProp = propKey === style ? this._previousStyleCopy : lastProps != null ? lastProps[propKey] : undefined;
+        var lastProp = propKey === "style" ? this._previousStyleCopy : lastProps != null ? lastProps[propKey] : undefined;
         if (!nextProps.hasOwnProperty(propKey) || nextProp === lastProp || nextProp == null && lastProp == null) {
             continue;
         }
-        if (propKey === style) {
+        if (propKey === "style") {
             if (nextProp) {
                 if ("development" !== 'production') {
                     checkAndWarnForMutatedStyle(this._previousStyleCopy, this._previousStyle, this);
@@ -810,27 +749,28 @@ ReactDOMComponent.prototype.updateDOMProperties = function (lastProps, nextProps
                 // Relies on `updateStylesByID` not mutating `styleUpdates`.
                 styleUpdates = nextProp;
             }
-        } else if (registrationNameModules.hasOwnProperty(propKey)) {//如果是事件则添加event
-            if (nextProp) {
-                enqueuePutListener(this, propKey, nextProp, transaction);
-            } else if (lastProp) {
-                deleteListener(this, propKey);
-            }
-        } else if (isCustomComponent(this._tag, nextProps)) {
-            if (!RESERVED_PROPS.hasOwnProperty(propKey)) {
-                DOMPropertyOperations.setValueForAttribute(getNode(this), propKey, nextProp);
-            }
-        } else if (DOMProperty.properties[propKey] || DOMProperty.isCustomAttribute(propKey)) {
-            var node = getNode(this);
-            // If we're updating to null or undefined, we should remove the property
-            // from the DOM node instead of inadvertently setting to a string. This
-            // brings us in line with the same behavior we have on initial render.
-            if (nextProp != null) {
-                DOMPropertyOperations.setValueForProperty(node, propKey, nextProp);
-            } else {
-                DOMPropertyOperations.deleteValueForProperty(node, propKey);
-            }
         }
+        //else if (registrationNameModules.hasOwnProperty(propKey)) {//如果是事件则添加event
+        //    if (nextProp) {
+        //        enqueuePutListener(this, propKey, nextProp, transaction);
+        //    } else if (lastProp) {
+        //        deleteListener(this, propKey);
+        //    }
+        //} else if (isCustomComponent(this._tag, nextProps)) {
+        //    if (!RESERVED_PROPS.hasOwnProperty(propKey)) {
+        //        DOMPropertyOperations.setValueForAttribute(getNode(this), propKey, nextProp);
+        //    }
+        //} else if (DOMProperty.properties[propKey] || DOMProperty.isCustomAttribute(propKey)) {
+        //    var node = getNode(this);
+        //    // If we're updating to null or undefined, we should remove the property
+        //    // from the DOM node instead of inadvertently setting to a string. This
+        //    // brings us in line with the same behavior we have on initial render.
+        //    if (nextProp != null) {
+        //        DOMPropertyOperations.setValueForProperty(node, propKey, nextProp);
+        //    } else {
+        //        DOMPropertyOperations.deleteValueForProperty(node, propKey);
+        //    }
+        //}
     }
     if (styleUpdates) {
         CSSPropertyOperations.setValueForStyles(getNode(this), styleUpdates, this);

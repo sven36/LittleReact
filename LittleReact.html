@@ -18,11 +18,14 @@
         getInitialState: function () {
             return { type: 'say:' };
         },
-        changeType: function () {
-            this.setState({ type: 'shout:' })
+        componentWillMount: function () {
+            console.log('willMount');
+        },
+        componentDidMount: function () {
+            console.log('afterMount');
         },
         render: function () {
-            return LittleReact.createElement("div", { onClick: this.changeType }, this.state.type, "Hello ", this.props.name);
+            return LittleReact.createElement("div", { id: 'tes' }, ""+this.state.type+"~Hello "+this.props.name+"");
         }
     });
     var dd = LittleReact.createElement(HelloMessage, { name: "John" });
@@ -37,9 +40,9 @@
 
 
 <script>
-    getActiveElement
+    //getActiveElement
 
-    return document.activeElement || document.body;
+    //return document.activeElement || document.body;
     /*var Human = function (param) {
         this.skill = param && param.skill || 'bao mi';
         this.hobby = param && param.hobby || 'bao mi';
