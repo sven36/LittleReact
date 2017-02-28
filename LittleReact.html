@@ -8,12 +8,35 @@
 <body>
     <div id="content">2344</div>
    <!--  <script type="text/javascript" src="./build/bundle.js"></script> -->
-
+    <p>-----------------</p>
+    <div id="cc" style="margin-top:30px;margin-left:100px;"></div>
     
 </body>
 </html>
 
 <script>
+
+    function hello() {
+        UL = LittleReact.createElement('ul', { id: 'hello~~', onClick: hello, ref: 'intt' }, LI1, LI2, LI3);
+        LittleReact.render(UL, document.getElementById('content'));
+    }
+    var LI = LittleReact.createClass({
+        getInitialState: function () {
+            return { type: 'say:' };
+        },
+        changeType: function () {
+            this.setState({ type: 'shout:' })
+        },
+        render: function () {
+            return LittleReact.createElement('li', { id: this.props.id, onClick: hello }, "" + this.state.type + this.props.text + "");
+        }
+    });
+    var LI1 = LittleReact.createElement(LI, { id: 'aLi1', onClick: hello, text: 'e li1' });
+    var LI2 = LittleReact.createElement(LI, { id: 'aLi2', onClick: hello, text: 'e li2' });
+    var LI3 = LittleReact.createElement(LI, { id: 'aLi3', onClick: hello, text: 'e li3' }, 'e li3');
+    var UL = LittleReact.createElement('ul', { id: 'hello~~' }, LI1, LI3);
+    LittleReact.render(UL, document.getElementById('content'));
+
     var HelloMessage = LittleReact.createClass({
         getInitialState: function () {
             return { type: 'say:' };
@@ -30,7 +53,7 @@
     });
     var dd = LittleReact.createElement(HelloMessage, { name: "John" });
 
-    LittleReact.render(dd, document.getElementById("content"));
+    LittleReact.render(dd, document.getElementById("cc"));
 
     
 </script>

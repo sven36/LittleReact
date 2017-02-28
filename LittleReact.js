@@ -264,7 +264,7 @@ var LittleReact = {
         //    nextContext;//emptyObject;
         //}
         var containerHasReactMarkup;//是否有渲染过的reactElement
-        var containerHasNonRootReactChild;
+        var containerHasNonRootReactChild;//是否有子节点；
         //获取容器的子元素;
         var reactRootElement;
         //nodeType为9代表是Document
@@ -451,16 +451,8 @@ var ReactCompositeComponent = function (element) {
         this._calledComponentWillUnmount = false;
 }
 ReactCompositeComponent.prototype.displayName = 'ReactCompositeComponent';
-ReactCompositeComponent.prototype.mountComponent = function (internalInstance, hostContainerInfo, tag, ownerDocument) {
-    this._context = {};
-    this._mountOrder = nextMountID++;
-    this._hostParent = hostParent;
-    this._hostContainerInfo = hostContainerInfo;
-    var publicProps = this._currentElement.props;
-    var Component = internalInstance._currentElement.type;
-    var instanceOrElement;
-    instanceOrElement = new Component(publicProps, this._context);
-    return performInitialMount(internalInstance, hostContainerInfo, tag, ownerDocument);
+ReactCompositeComponent.prototype.mountComponent = function (hostParent, hostContainerInfo, tag, ownerDocument) {
+    return performInitialMount(this, hostParent, tag, ownerDocument);
 }
 
 
@@ -491,13 +483,15 @@ function performInitialMount(componentInstance, hostContainerInfo, tag, ownerDoc
     var inst;
 
     //如果拥有子组件则找到它，目的是先渲染子组件；
-    if (displayName) {
+    if (displayName == 'ReactCompositeComponent') {
         inst = new Component(props, null, null);
         child = inst.render();
         child = instantiateReactComponent(child);
+        tag = child._tag;
     }
     else {
         inst = function () { };
+        //如果是ReactDOMComponent则直接调用其原型渲染方法；
         child = componentInstance;
     }
     //得到currentElement子节点对应的Component类实例；
@@ -517,15 +511,24 @@ function performInitialMount(componentInstance, hostContainerInfo, tag, ownerDoc
     if (inst.componentDidMount) {
         inst.componentDidMount();
     }
-    mountNodesToContainer(markup, hostContainerInfo,null);
+    var identify=false;
+    if (child._ContainerInfo) {
+        identify = true;
+    }
+    mountNodesToContainer(markup, hostContainerInfo, identify);
 }
 
 //最后一步~把渲染后的Node添加进容器；
-function mountNodesToContainer(markup,container,refnode) {
-    while (container.lastChild) {
-        container.removeChild(container.lastChild);
+function mountNodesToContainer(markup, container, identify) {
+    if (identify) {
+        container.appendChild(markup.node);
+    } else {
+        while (container.lastChild) {
+            container.removeChild(container.lastChild);
+        }
+        container.insertBefore(markup.node, null);
     }
-    container.insertBefore(markup.node, refnode);
+
 }
 
 var ReactDOMComponent= function (element) {
@@ -625,11 +628,15 @@ ReactDOMComponent.prototype.mountComponent = function (hostParent,container, tag
         } else {
             el = ownerDocument.createElementNS(namespaceURI, this._currentElement.type);
         }
+        
         ReactDOMComponentTree.precacheNode(this, el);
         //this._flags |= Flags.hasCachedChildNodes;
-        if (!this._hostParent) {
+        if (!this._ContainerInfo) {
             el.setAttribute('data-reactroot', '');
         }
+        var child;//如果有子节点
+        var nextName;//如果有子节点,子节点名称
+
         //把属性赋上去；
         this.updateDOMProperties(null, props, transaction);
         var lazyTree = DOMLazyTree(el);
@@ -640,6 +647,14 @@ ReactDOMComponent.prototype.mountComponent = function (hostParent,container, tag
                 return;
             }
             lazyTree.node.textContent = props.children;
+        }
+        else if (Array.isArray(props.children)) {//有未渲染的子元素
+            var children = props.children;
+            for (var i = 0; i < children.length; i++) {
+                child = new instantiateReactComponent(children[i]);
+                nextName = "." + i.toString(36);
+                child.mountComponent(lazyTree.node, container, null, ownerDocument);
+            }
         }
         mountImage = lazyTree;
     } else {
@@ -759,18 +774,19 @@ ReactDOMComponent.prototype.updateDOMProperties = function (lastProps, nextProps
         //} else if (isCustomComponent(this._tag, nextProps)) {
         //    if (!RESERVED_PROPS.hasOwnProperty(propKey)) {
         //        DOMPropertyOperations.setValueForAttribute(getNode(this), propKey, nextProp);
-        //    }
-        //} else if (DOMProperty.properties[propKey] || DOMProperty.isCustomAttribute(propKey)) {
-        //    var node = getNode(this);
-        //    // If we're updating to null or undefined, we should remove the property
-        //    // from the DOM node instead of inadvertently setting to a string. This
-        //    // brings us in line with the same behavior we have on initial render.
-        //    if (nextProp != null) {
-        //        DOMPropertyOperations.setValueForProperty(node, propKey, nextProp);
-        //    } else {
-        //        DOMPropertyOperations.deleteValueForProperty(node, propKey);
-        //    }
-        //}
+            //    }}|| nextProps.children instanceof Array
+        else if (typeof nextProps[propKey] === 'string') {
+            var node;
+            if (this._hostNode) {//取出我们在precacheNode方法中保存的父节点;
+                node = this._hostNode;
+            }
+            // 把传入的props赋给节点；
+            if (nextProp != null) {
+                node.setAttribute(propKey, '' + nextProps[propKey]);
+            } else {
+                DOMPropertyOperations.deleteValueForProperty(node, propKey);
+            }
+        }
     }
     if (styleUpdates) {
         CSSPropertyOperations.setValueForStyles(getNode(this), styleUpdates, this);
