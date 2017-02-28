@@ -276,6 +276,39 @@ var LittleReact = {
         //如果容器此前拥有过react子节点则需要找到它，然后进行DOMdiff比较；
         var prevComponent = getClosestInstanceFromNode(reactRootElement);
         if (prevComponent) {
+            //获取容器子节点上次渲染的的ReactElement元素
+            var prevElement = prevComponent._currentElement;
+            //初始化一个是否需要渲染元素的标识；
+            var shouldUpdateReactComponent;
+            var prevEmpty = prevElement === null || prevElement === false;
+            var nextEmpty = nextElement === null || nextElement === false;
+            var prevType = typeof prevElement;
+            var nextType = typeof nextElement;
+            if (prevEmpty || nextEmpty) {
+                shouldUpdateReactComponent = prevEmpty === nextEmpty;
+            }
+            if (prevType === 'string' || prevType === 'number') {
+                shouldUpdateReactComponent = nextType === 'string' || nextType === 'number';
+            } else {
+                shouldUpdateReactComponent = nextType === 'object' && prevElement.type === nextElement.type && prevElement.key === nextElement.key;
+            }
+            if (shouldUpdateReactComponent) {
+                //脏检查;
+                var dirtyComponents = [];
+                var updateNumber = 0;
+                var domDiff;
+                var publicInst = prevComponent._hostNode;
+                //给先前节点赋上当前需要渲染的元素，开始脏检查；
+                prevComponent._pendingElement = nextElement;
+                if (prevComponent._updateNumber == null) {
+                    prevComponent._updateNumber = updateNumber+1;
+                }
+                if (nextElement === prevElement) {
+                    return;
+                } else {
+                    domDiff = prevEmpty || nextEmpty || nextElement.ref !== prevElement.ref ||  typeof nextElement.ref === 'string' && nextElement._owner !== prevElement._owner
+                }
+            }
 
         }
         else {
