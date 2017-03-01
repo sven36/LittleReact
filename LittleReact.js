@@ -247,7 +247,20 @@ extend(ReactDefaultBatchingStrategyTransition.prototype, Transaction, {
 });
 //初始化transaction会调用混入的reinitializeTransaction方法，然后返回[FLUSH_BATCHED_UPDATES, RESET_BATCHED_UPDATES]数组对应的initial和close方法；还会初始化数据；
 var transaction = new ReactDefaultBatchingStrategyTransition();
-
+function shouldUpdateReactComponent(prevElement, nextElement) {
+    var prevEmpty = prevElement === null || prevElement === false;
+    var nextEmpty = nextElement === null || nextElement === false;
+    var prevType = typeof prevElement;
+    var nextType = typeof nextElement;
+    if (prevEmpty || nextEmpty) {
+        return  prevEmpty === nextEmpty;
+    }
+    if (prevType === 'string' || prevType === 'number') {
+        return  nextType === 'string' || nextType === 'number';
+    } else {
+        return  nextType === 'object' && prevElement.type === nextElement.type && prevElement.key === nextElement.key;
+    }
+}
 
 var LittleReact = {
     nextReactRootIndex: 0,
@@ -279,20 +292,8 @@ var LittleReact = {
             //获取容器子节点上次渲染的的ReactElement元素
             var prevElement = prevComponent._currentElement;
             //初始化一个是否需要渲染元素的标识；
-            var shouldUpdateReactComponent;
-            var prevEmpty = prevElement === null || prevElement === false;
-            var nextEmpty = nextElement === null || nextElement === false;
-            var prevType = typeof prevElement;
-            var nextType = typeof nextElement;
-            if (prevEmpty || nextEmpty) {
-                shouldUpdateReactComponent = prevEmpty === nextEmpty;
-            }
-            if (prevType === 'string' || prevType === 'number') {
-                shouldUpdateReactComponent = nextType === 'string' || nextType === 'number';
-            } else {
-                shouldUpdateReactComponent = nextType === 'object' && prevElement.type === nextElement.type && prevElement.key === nextElement.key;
-            }
-            if (shouldUpdateReactComponent) {
+            var shouldUpdate = shouldUpdateReactComponent(prevElement,nextElement);
+            if (shouldUpdate) {
                 //脏检查;
                 var dirtyComponents = [];
                 var updateNumber = 0;
@@ -308,6 +309,28 @@ var LittleReact = {
                 } else {
                     domDiff = prevEmpty || nextEmpty || nextElement.ref !== prevElement.ref ||  typeof nextElement.ref === 'string' && nextElement._owner !== prevElement._owner
                 }
+                var prevChildren = prevComponent._renderedChildren;
+                var nextChildren = nextElement.props;
+                var name;
+                var prevChild;
+                for(name in nextChildren){
+                    prevChild = prevChildren && prevChildren[name];
+                    var difPrevElement = prevChild && prevChild._currentElement;
+                    var difNextElement = nextChildren[name];
+                    if (prevChild != null && shouldUpdateReactComponent(difPrevElement, difNextElement)) {
+                        if (difPrevElement == difPrevElement) {
+                            nextChildren[name] = prevChild;
+                        } else {
+                            if (prevChild) {
+
+                            }
+                            var nextChildInstance =new instantiateReactComponent(difNextElement);
+                            nextChildren[name] = nextChildInstance;
+
+                        }
+                    }
+                }
+
             }
 
         }
@@ -569,7 +592,7 @@ var ReactDOMComponent= function (element) {
     this._currentElement = element;
     this._tag = tag.toLowerCase();
     this._namespaceURI = null;
-    this._renderedChildren = null;
+    this._renderedChildren = [];//存放渲染后的子节点，如果节点更改，进行DOMdiff比较；
     this._previousStyle = null;
     this._previousStyleCopy = null;
     this._hostNode = null;
@@ -685,6 +708,7 @@ ReactDOMComponent.prototype.mountComponent = function (hostParent,container, tag
             var children = props.children;
             for (var i = 0; i < children.length; i++) {
                 child = new instantiateReactComponent(children[i]);
+                this._renderedChildren.push(child);//保存渲染后的子节点；用于DOM diff比较;
                 nextName = "." + i.toString(36);
                 child.mountComponent(lazyTree.node, container, null, ownerDocument);
             }
