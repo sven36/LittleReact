@@ -6,7 +6,7 @@
     <script type="text/javascript" src="/build/LittleReact.js"></script>
 </head>
 <body>
-    <div id="content">2344</div>
+    <div id="content"></div>
    <!--  <script type="text/javascript" src="./build/bundle.js"></script> -->
     <p>-----------------</p>
     <div id="cc" style="margin-top:30px;margin-left:100px;"></div>
@@ -28,7 +28,7 @@
             this.setState({ type: 'shout:' })
         },
         render: function () {
-            return LittleReact.createElement('li', { id: this.props.id, onClick: hello }, "" + this.state.type + this.props.text + "");
+            return LittleReact.createElement('li', { id: this.props.id, onClick: this.changeType }, "" + this.state.type + this.props.text + "");
         }
     });
     var LI1 = LittleReact.createElement(LI, { id: 'aLi1', onClick: hello, text: 'e li1' });
@@ -36,24 +36,23 @@
     var LI3 = LittleReact.createElement(LI, { id: 'aLi3', onClick: hello, text: 'e li3' }, 'e li3');
     var UL = LittleReact.createElement('ul', { id: 'hello~~' }, LI1, LI3);
     LittleReact.render(UL, document.getElementById('content'));
+    //var HelloMessage = LittleReact.createClass({
+    //    getInitialState: function () {
+    //        return { type: 'say:' };
+    //    },
+    //    componentWillMount: function () {
+    //        console.log('willMount');
+    //    },
+    //    componentDidMount: function () {
+    //        console.log('afterMount');
+    //    },
+    //    render: function () {
+    //        return LittleReact.createElement("div", { id: 'tes' }, ""+this.state.type+"~Hello "+this.props.name+"");
+    //    }
+    //});
+    //var dd = LittleReact.createElement(HelloMessage, { name: "John" });
 
-    var HelloMessage = LittleReact.createClass({
-        getInitialState: function () {
-            return { type: 'say:' };
-        },
-        componentWillMount: function () {
-            console.log('willMount');
-        },
-        componentDidMount: function () {
-            console.log('afterMount');
-        },
-        render: function () {
-            return LittleReact.createElement("div", { id: 'tes' }, ""+this.state.type+"~Hello "+this.props.name+"");
-        }
-    });
-    var dd = LittleReact.createElement(HelloMessage, { name: "John" });
-
-    LittleReact.render(dd, document.getElementById("cc"));
+    //LittleReact.render(dd, document.getElementById("cc"));
 
     
 </script>
