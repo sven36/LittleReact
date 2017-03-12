@@ -15,10 +15,50 @@
 </html>
 
 <script>
+    //var ts = [1, 2, 3];
+    //function mapChildren(children, func, context) {
+    //    if (children == null) {
+    //        return children;
+    //    }
+    //    var result = [];
+    //    mapIntoWithKeyPrefixInternal(children, result, null, func, context);
+    //    return result;
+    //}
+    //mapChildren(ts);
+    var TodoList = LittleReact.createClass({
+        getInitialState: function () {
+            return { items: [] };
+        },
+        add: function () {
+            var nextItems = this.state.items.concat([this.state.text]);
+            this.setState({ items: nextItems, text: '' });
+        },
+        onChange: function (e) {
+            this.setState({ text: e.target.value });
+        },
+        render: function () {
+            var createItem = function (itemText) {
+                return LittleReact.createElement("div", null, itemText);
+            };
+            var lists=[];
+            for (var i = 0; i < this.state.items.length; i++) {
+                if (this.state.items[i]) {
+                    lists.push(createItem(this.state.items[i]));
+                }
+            }
+            var input = LittleReact.createElement("input", { onChange: this.onChange, value: this.state.text });
+            var button = LittleReact.createElement("p", { onClick: this.add}, 'Add#' + (this.state.items.length + 1))
+            var children = lists.concat([input, button])
+
+            return LittleReact.createElement("div", null, children);
+        }
+    });
+    LittleReact.render(LittleReact.createElement(TodoList), document.getElementById("content"));
+
 
     function hello() {
-        UL = LittleReact.createElement('ul', { id: 'hello~~', onClick: hello, ref: 'intt' }, LI1, LI2, LI3);
-        LittleReact.render(UL, document.getElementById('content'));
+        //UL = LittleReact.createElement('ul', { id: 'hello~~', onClick: hello, ref: 'intt' }, LI1, LI2, LI3);
+        //LittleReact.render(UL, document.getElementById('content'));
     }
     var LI = LittleReact.createClass({
         getInitialState: function () {
@@ -35,7 +75,7 @@
     var LI2 = LittleReact.createElement(LI, { id: 'aLi2', onClick: hello, text: 'e li2' });
     var LI3 = LittleReact.createElement(LI, { id: 'aLi3', onClick: hello, text: 'e li3' }, 'e li3');
     var UL = LittleReact.createElement('ul', { id: 'hello~~' }, LI1, LI3);
-    LittleReact.render(UL, document.getElementById('content'));
+    //LittleReact.render(UL, document.getElementById('content'));
     //var HelloMessage = LittleReact.createClass({
     //    getInitialState: function () {
     //        return { type: 'say:' };

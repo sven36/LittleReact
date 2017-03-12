@@ -43,7 +43,7 @@ var ReactClass = {
 ReactClassComponent.prototype.setState = function (partialState) {
     var nextState = partialState;
     var inst = this;
-    inst.state = nextState;
+    inst.state = extend(inst.state, nextState);
     var nextRenderedElement = inst.render();
     if (inst.componentWillUpdate) {
         inst.componentWillUpdate();
@@ -383,12 +383,14 @@ LittleReact.createElement = function (type, config, children) {
     var self = null;
     var source = null;
     //ref用于父组件引用子组件的真实DOM，key用于调和算法，判断该组件是否update或remove 这个比较高级可稍后再议
-    ref = config.ref;
-    key = config.key;
-    //RESERVED_PROPS为_source, self,key,ref的一个枚举，此方法的作用是让props复制除_source, self,key,ref之外的其它属性；
-    for (propName in config) {
-        if (hasOwnProperty.call(config, propName) && !RESERVED_PROPS.hasOwnProperty(propName)) {
-            props[propName] = config[propName];
+    if (config) {
+        ref = config.ref;
+        key = config.key;
+        //RESERVED_PROPS为_source, self,key,ref的一个枚举，此方法的作用是让props复制除_source, self,key,ref之外的其它属性；
+        for (propName in config) {
+            if (hasOwnProperty.call(config, propName) && !RESERVED_PROPS.hasOwnProperty(propName)) {
+                props[propName] = config[propName];
+            }
         }
     }
     //处理children,全部挂载到props的Children属性上，如果只有一个子元素则直接赋值；
@@ -699,7 +701,8 @@ ReactDOMComponent.prototype.mountComponent = function (hostParent, container, ta
                 el = ownerDocument.createElement(this._currentElement.type);
             }
         } else {
-            el = ownerDocument.createElementNS(namespaceURI, this._currentElement.type);
+            el = ownerDocument.createElement(this._currentElement.type);
+            //el = ownerDocument.createElementNS(namespaceURI, this._currentElement.type);
         }
 
         ReactDOMComponentTree.precacheNode(this, el);
@@ -726,10 +729,14 @@ ReactDOMComponent.prototype.mountComponent = function (hostParent, container, ta
             var children = props.children;
             for (var i = 0; i < children.length; i++) {
                 child = new instantiateReactComponent(children[i]);
+                child._constructor = this._constructor;
                 this._renderedChildren.push(child);//保存渲染后的子节点；用于DOM diff比较;
                 nextName = "." + i.toString(36);
                 child.mountComponent(lazyTree.node, container, null, ownerDocument);
             }
+        }
+        if (hostParent) {
+            hostParent.appendChild(lazyTree.node);
         }
         mountImage = lazyTree;
     } else {
@@ -845,7 +852,7 @@ ReactDOMComponent.prototype.updateDOMProperties = function (lastProps, nextProps
                 var eventType = propKey.replace('on', '').toLowerCase();
                 //绑定作用域
                 nextProp=nextProp.bind(this._constructor);
-                EventListener.listen(this._hostNode.ownerDocument, eventType, nextProp);//EventListener.dispatchEvent
+                EventListener.listen(this._hostNode, eventType, nextProp);//EventListener.dispatchEvent
             } else if (lastProp) {
                 deleteListener(this, propKey);
             }
@@ -860,10 +867,10 @@ ReactDOMComponent.prototype.updateDOMProperties = function (lastProps, nextProps
                 node = this._hostNode;
             }
             // 把传入的props赋给节点；
-            if (propKey != null) {
+            if (propKey != null&&propKey!=='children') {
                 node.setAttribute(propKey, '' + nextProps[propKey]);
             } else {
-                DOMPropertyOperations.deleteValueForProperty(node, propKey);
+                //DOMPropertyOperations.deleteValueForProperty(node, propKey);
             }
         }
     }
