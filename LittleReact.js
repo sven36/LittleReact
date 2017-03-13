@@ -50,8 +50,16 @@ ReactClassComponent.prototype.setState = function (partialState) {
     }
     var internalInstance = inst._reactInternalInstance;
     var prevElement = internalInstance._currentElement;
-    internalInstance._currentElement = nextRenderedElement;
-    internalInstance.updateComponent(prevElement, nextRenderedElement);
+    //比较之前的props与setstate调用render方法生成的props，如果type与key都相同
+    //则替换原先的props为setstate调用之后的props；
+    if (shouldUpdateReactComponent(prevElement, nextRenderedElement)) {
+        internalInstance._currentElement = nextRenderedElement;
+        internalInstance.updateComponent(prevElement, nextRenderedElement);
+
+    } else {
+
+    }
+
     if (inst.componentDidUpdate) {
         inst.componentDidUpdate();
     }
@@ -882,6 +890,30 @@ ReactDOMComponent.prototype.updateComponent = function (prevElement, nextElement
     var lastProps = prevElement.props;
     var nextProps = this._currentElement.props;
     this.updateDOMProperties(lastProps, nextProps, transaction);
+    //替换children;
+    var prevChildren = this._renderedChildren;
+    var nextChildren;
+    var prevChild;
+    if (Array.isArray(nextProps.children)) {
+        nextChildren = nextProps.children;
+        for (var i = 0; i < nextChildren.length; i++) {
+            prevChild = prevChildren && prevChildren[i];
+            var prevChildElement = prevChild && prevChild._currentElement;
+            var nextChildElement = nextChildren[i];
+            if (prevChild != null && shouldUpdateReactComponent(prevChildElement, nextChildElement)) {
+                prevChild._currentElement = nextChildElement;
+                prevChild.updateComponent(prevChildElement, nextChildElement);
+                nextChildren[i] = prevChild;
+            } else {
+                if (prevChild) {
+                    //清除以改变的子节点，否则会造成该组件一直存在内存中；
+                }
+                var nextChildInstance = instantiateReactComponent(nextChildElement);
+                nextChildren[i] = nextChildInstance;
+                var markup = nextChildInstance.mountComponent(this._hostNode, this._containerInfo, nextChildElement.tag, this._containerInfo.ownerDocument);
+            }
+        }
+    }
     if (typeof nextProps.children === 'string' || typeof nextProps.children === 'number') {
         var firstChild = this._hostNode.firstChild;
         if (firstChild && firstChild === this._hostNode.lastChild && firstChild.nodeType === 3) {

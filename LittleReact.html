@@ -29,6 +29,12 @@
         getInitialState: function () {
             return { items: [] };
         },
+        componentWillUpdate: function () {
+            alert('will');
+        },
+        componentDidUpdate: function () {
+            alert('did');
+        },
         add: function () {
             var nextItems = this.state.items.concat([this.state.text]);
             this.setState({ items: nextItems, text: '' });
